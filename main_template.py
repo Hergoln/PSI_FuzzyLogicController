@@ -7,6 +7,7 @@
 import gym # Instalacja: https://github.com/openai/gym
 import time
 from helper import HumanControl, Keys, CartForce
+from functions import Display_membership_functions, Compute_weighted_integral, FORCE_DOMAIN
 import matplotlib.pyplot as plt
 
 
@@ -15,7 +16,7 @@ import skfuzzy as fuzz
 
 #
 # przygotowanie środowiska
-#
+#   
 control = HumanControl()
 env = gym.make('gym_PSI:CartPole-v2')
 env.reset()
@@ -43,25 +44,45 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 #########################################################
 
 """
-
 1. Określ dziedzinę dla każdej zmiennej lingwistycznej. Każda zmienna ma własną dziedzinę.
 2. Zdefiniuj funkcje przynależności dla wybranych przez siebie zmiennych lingwistycznych.
 3. Wyświetl je, w celach diagnostycznych.
-
-Przykład wyświetlania:
-
-fig, (ax0) = plt.subplots(nrows=1, figsize=(8, 9))
-
-ax0.plot(x_variable, variable_left, 'b', linewidth=1.5, label='Left')
-ax0.plot(x_variable, variable_zero, 'g', linewidth=1.5, label='Zero')
-ax0.plot(x_variable, variable_right, 'r', linewidth=1.5, label='Right')
-ax0.set_title('Angle')
-ax0.legend()
-
-
-plt.tight_layout()
-plt.show()
 """
+
+# pole_angle wystarczy do trzymania patyka w górze
+# pole_angle # <-Inf, +Inf> w zaleznosci od w ktora strone sie obroci w radianach no i oczywiscie powyze (i ponizej) PI/2 juz nie ma sensu probowac
+
+# te funkcje zapewniają, że kąt jest całokowicie pozytywny lub całkowicie negatywny przy 30 stopniach
+DEGREES_DIV = 24
+def pole_angle_membership_func_neg(x):
+    return min(max(-(x), 0) * DEGREES_DIV / np.pi, 1)
+def pole_angle_membership_func_zer(x):
+    return max((-abs(x)) * DEGREES_DIV / np.pi + 1, 0)
+def pole_angle_membership_func_pos(x):
+    return min(max(x, 0) * DEGREES_DIV / np.pi, 1)
+
+angles = np.linspace(-np.pi / 4, np.pi / 4, 101)
+pole_angle_tup_neg = (angles, pole_angle_membership_func_neg, 'r', 'Negative')
+pole_angle_tup_zer = (angles, pole_angle_membership_func_zer, 'g', 'Zero')
+pole_angle_tup_pos = (angles, pole_angle_membership_func_pos, 'b', 'Positive')
+
+
+
+def force_membership_func_neg(x):
+    return min(max(-x, 0) / 5, 1)
+def force_membership_func_zer(x):
+    return max(-abs(x) / 5 + 1, 0)
+def force_membership_func_pos(x):
+    return min(max(x, 0) / 5, 1)
+
+values = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 101)
+force_tup_neg = (values, force_membership_func_neg, 'r', 'Negative')
+force_tup_zer = (values, force_membership_func_zer, 'g', 'Zero')
+force_tup_pos = (values, force_membership_func_pos, 'b', 'Positive')
+
+Display_membership_functions('Angle', pole_angle_tup_neg, pole_angle_tup_zer, pole_angle_tup_pos)
+Display_membership_functions('Force', force_tup_neg, force_tup_zer, force_tup_pos)
+plt.show()
 
 #########################################################
 # KONIEC KODU INICJUJĄCEGO
@@ -120,24 +141,33 @@ while not control.WantExit:
     1. Przeprowadź etap rozmywania, w którym dla wartości zmierzonych wyznaczone zostaną ich przynależności do poszczególnych
        zmiennych lingwistycznych. Jedno fizyczne wejście (źródło wartości zmierzonych, np. położenie wózka) posiada własną
        zmienną lingwistyczną.
-       
-       Sprawdź funkcję interp_membership
-       
-    2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.
-       Przykład reguły:
-       JEŻELI kąt patyka jest zerowy ORAZ prędkość wózka jest zerowa TO moc chwilowa jest zerowa
-       JEŻELI kąt patyka jest lekko ujemny ORAZ prędkość wózka jest zerowa TO moc chwilowa jest lekko ujemna
-       JEŻELI kąt patyka jest średnio ujemny ORAZ prędkość wózka jest lekko ujemna TO moc chwilowa jest średnio ujemna
-       JEŻELI kąt patyka jest szybko rosnący w kierunku ujemnym TO moc chwilowa jest mocno ujemna
-       .....
-       
+    """
+    u_pole_angle_neg = pole_angle_membership_func_neg(pole_angle)
+    u_pole_angle_zer = pole_angle_membership_func_zer(pole_angle)
+    u_pole_angle_pos = pole_angle_membership_func_pos(pole_angle)
+           
+    """
+    2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
-    
-    
+
+       dla samego pole_angle:
+       (R0)JEŻELI kąt jest ujemny TO siła jest ujemna       
+       (R1)JEŻELI kąt jest zerowy TO siła jest zerowa 
+       (R2)JEŻELI kąt jest dodatni TO siła jest dodatnia
+       
+    """
+    R0 = u_pole_angle_neg
+    R1 = u_pole_angle_zer
+    R2 = u_pole_angle_pos
+
+    """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
+    """
+    # dla jednej zmiennej pole_angle nie ma tych samych konkluzji
     
+    """
     4. Dla każdej reguły przeprowadź operację wnioskowania Mamdaniego.
        Operatorem wnioskowania jest min().
        Przykład: Jeżeli lingwistyczna zmienna wyjściowa ForceToApply ma 5 wartości (strong left, light left, idle, light right, strong right)
@@ -146,17 +176,27 @@ while not control.WantExit:
        W ten sposób wyznaczasz aktywacje poszczególnych wartości lingwistycznej zmiennej wyjściowej.
        Uważaj - aktywacja wartości zmiennej lingwistycznej w konkluzji to nie liczba a zbiór rozmyty.
        Ponieważ stosujesz operator min(), to wynikiem będzie "przycięty od góry" zbiór rozmyty. 
-       
-    5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
-    
-    6. Dokonaj defuzyfikacji (np. całkowanie ważone - centroid).
-    
-    7. Czym będzie wyjściowa wartość skalarna?
+    """
+    u_force_neg_prim = lambda y : min(R0, force_membership_func_neg(y))
+    u_force_zer_prim = lambda y : min(R1, force_membership_func_zer(y))
+    u_force_pos_prim = lambda y : min(R2, force_membership_func_pos(y))
     
     """
+    5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
+    """
+    # dla jednej zmiennej pole_angle nie ma tych samych konkluzji
+    
+    """
+    6. Dokonaj defuzyfikacji (np. całkowanie ważone - centroid).
+    """
+    out_force_func = lambda y : max(u_force_neg_prim(y), u_force_zer_prim(y), u_force_pos_prim(y))
+    temp_fuzzy_response = Compute_weighted_integral(out_force_func)
+    
+    """
+    7. Czym będzie wyjściowa wartość skalarna?
+    """
 
-    fuzzy_response = CartForce.IDLE_FORCE # do zmiennej fuzzy_response zapisz wartość siły, jaką chcesz przyłożyć do wózka.
-
+    fuzzy_response = temp_fuzzy_response # do zmiennej fuzzy_response zapisz wartość siły, jaką chcesz przyłożyć do wózka.
     #
     # KONIEC algorytmu regulacji
     #########################

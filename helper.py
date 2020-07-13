@@ -10,7 +10,6 @@ class CartForce:
     UNIT_RIGHT = 1 # jednostkowe pchnięcie wózka w prawo [N]
     IDLE_FORCE = 0
 
-
 class HumanControl(object):
     UserForce = None # type: Union [int, None] # siła, którą użytkownik chce pchnąć wózek
     WantReset = False
