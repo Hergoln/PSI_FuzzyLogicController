@@ -3,25 +3,44 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-FORCE_DOMAIN = 7
+FORCE_DOMAIN = 8
+NEGATIVE = 'Negative'
+ZERO = 'Zero'
+POSITIVE = 'Positive'
 
-def Display_membership_functions(title, *functions):
+def Display_membership_functions(title, value_range, *functions):
+    
+    domain = np.linspace(-value_range, value_range, 101)
     fig, (ax0) = plt.subplots(nrows=1, figsize=(8, 9))
-    for index, tup in enumerate(functions):
+    
+    tup = Memebership_display_tuples(functions)
+    
+    for el in tup:
         values = []
-        for x in tup[0]:
-            values.append(tup[1](x))        
-        
-        ax0.plot(tup[0], values, tup[2], linewidth=1.5, label=tup[3])
+        for x in domain:
+            values.append(el[0](x))        
+        ax0.plot(domain, values, el[1], linewidth=1.5, label=el[2])
     ax0.legend()
     ax0.set_title(title)
     plt.tight_layout()
     
 def Compute_weighted_integral_force(func):
-    exs = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 101)
-    return sum([x * func(x) for x in exs]) / sum([func(x) for x in exs])
+    exs = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 51)
+    weights = sum([func(x) for x in exs])
+    # nie wiem czy ta suma w ogóle powinna mieć kiedykolwiek zerową sumę wag :/
+    if weights == 0:
+        print("weights is 0")
+        return 0
+    value = sum([x * func(x) for x in exs])
+    return  value / weights
 
-def Memebership_display_tuples(values, *functions):
-    return ((values, functions[0], 'r', 'Negative'),
-            (values, functions[1], 'g', 'Zero'),
-            (values, functions[2], 'b', 'Positive'))
+def Memebership_display_tuples(functions):
+    return ((functions[0], 'r', 'Negative'),
+            (functions[1], 'g', 'Zero'),
+            (functions[2], 'b', 'Positive'))
+
+def Generic_membership_functions(value_range):
+    neg_func = lambda x: min(max(-x, 0.0) / value_range, 1.0)
+    zer_func = lambda x: max(-abs(x) / value_range + 1, 0.0)
+    pos_func = lambda x: min(max(x, 0.0) / value_range, 1.0)
+    return {NEGATIVE : neg_func, ZERO : zer_func, POSITIVE : pos_func}

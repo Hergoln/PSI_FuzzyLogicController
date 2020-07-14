@@ -50,100 +50,67 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 """
 
 # cart_position
-given = 1
-CART_POSITION_VALUES_RANGE = 2.5
-def cart_position_func_neg(x):
-    return min(max(-(x - given), 0) / CART_POSITION_VALUES_RANGE, 1)
-def cart_position_func_zer(x):
-    return max(-abs((x - given)) / CART_POSITION_VALUES_RANGE + 1, 0)
-def cart_position_func_pos(x):
-    return min(max((x - given), 0) / CART_POSITION_VALUES_RANGE, 1)
-
-cart_positions_domains = np.linspace(-CART_POSITION_VALUES_RANGE - 1, CART_POSITION_VALUES_RANGE + 1, 101)
-cart_position_tups = Memebership_display_tuples(
-    cart_positions_domains,
-    cart_position_func_neg,
-    cart_position_func_zer,
-    cart_position_func_pos,
+given = 0
+CART_POSITION_VALUES_RANGE = 0.5
+CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE + 2
+cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE - given)
+Display_membership_functions(
+    'Cart position',
+    CART_POSITION_DISPLAY_RANGE,
+    cart_position_funcs[NEGATIVE],
+    cart_position_funcs[ZERO],
+    cart_position_funcs[POSITIVE],
     )
-Display_membership_functions('Cart position', *cart_position_tups)
 
 # cart_velocity
-CART_VELOCITY_VALUES_RANGE = 2
-def cart_velocity_func_neg(x):
-    return min(max(-x, 0) / CART_VELOCITY_VALUES_RANGE, 1)
-def cart_velocity_func_zer(x):
-    return max(-abs(x) / CART_VELOCITY_VALUES_RANGE + 1, 0)
-def cart_velocity_func_pos(x):
-    return min(max(x, 0) / CART_VELOCITY_VALUES_RANGE, 1)
-
-cart_velocities_domain = np.linspace(-CART_VELOCITY_VALUES_RANGE - 1, CART_VELOCITY_VALUES_RANGE + 1, 101)
-cart_velocity_tups = Memebership_display_tuples(
-    cart_velocities_domain,
-    cart_velocity_func_neg,
-    cart_velocity_func_zer,
-    cart_velocity_func_pos,
+CART_VELOCITY_VALUES_RANGE = 0.2
+CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
+cart_velocity_funcs = Generic_membership_functions(CART_VELOCITY_VALUES_RANGE)
+Display_membership_functions(
+    'Cart velocity',
+    CART_VELOCITY_DISPLAY_RANGE,
+    cart_velocity_funcs[NEGATIVE],
+    cart_velocity_funcs[ZERO],
+    cart_velocity_funcs[POSITIVE],
     )
-Display_membership_functions('Cart velocity', *cart_velocity_tups)
-# pole_angle wystarczy do trzymania patyka w górze
-# pole_angle # <-Inf, +Inf> w zaleznosci od w ktora strone sie obroci w radianach no i oczywiscie powyze (i ponizej) PI/2 juz nie ma sensu probowac
 
-# te funkcje zapewniają, że kąt jest całokowicie pozytywny lub całkowicie negatywny przy 30 stopniach
-DEGREES_DIV = 24
-def pole_angle_membership_func_neg(x):
-    return min(max(-x, 0) * DEGREES_DIV / np.pi, 1)
-def pole_angle_membership_func_zer(x):
-    return max((-abs(x)) * DEGREES_DIV / np.pi + 1, 0)
-def pole_angle_membership_func_pos(x):
-    return min(max(x, 0) * DEGREES_DIV / np.pi, 1)
-
-angles = np.linspace(-np.pi / 6, np.pi / 6, 101)
-pole_angle_tups = Memebership_display_tuples(
-    angles,
-    pole_angle_membership_func_neg,
-    pole_angle_membership_func_zer,
-    pole_angle_membership_func_pos,
+# pole_angle 
+DEGREES_DIV = 24.0
+DEGREES_DISPLAY_RANGE = np.pi / 6.0
+pole_angle_funcs = Generic_membership_functions(np.pi / DEGREES_DIV)
+Display_membership_functions(
+    'Angle',
+    DEGREES_DISPLAY_RANGE,
+    pole_angle_funcs[NEGATIVE],
+    pole_angle_funcs[ZERO],
+    pole_angle_funcs[POSITIVE],
     )
-Display_membership_functions('Angle', *pole_angle_tups)
 
 # tip_velocity
-TIP_VELOCITY_VALUES_RANGE = 2
-TIP_VELOCITY_DOMAIN = 5
-def tip_velocity_func_neg(x):
-    return min(max(-x, 0) / TIP_VELOCITY_VALUES_RANGE, 1)
-def tip_velocity_func_zer(x):
-    return max(-abs(x) / TIP_VELOCITY_VALUES_RANGE + 1, 0)
-def tip_velocity_func_pos(x):
-    return min(max(x, 0) / TIP_VELOCITY_VALUES_RANGE, 1)
-
-tip_velocities_domain = np.linspace(-TIP_VELOCITY_DOMAIN, TIP_VELOCITY_DOMAIN, 101)
-tip_velocities_tups = Memebership_display_tuples(
-    tip_velocities_domain,
-    tip_velocity_func_neg,
-    tip_velocity_func_zer,
-    tip_velocity_func_pos,
-    ) 
-Display_membership_functions('Tip velocity', *tip_velocities_tups)
+TIP_VELOCITY_VALUES_RANGE = 0.5
+TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
+tip_velocities_funcs = Generic_membership_functions(TIP_VELOCITY_VALUES_RANGE)
+Display_membership_functions(
+    'Tip velocity',
+    TIP_VELOCITY_DISPLAY_RANGE,
+    tip_velocities_funcs[NEGATIVE],
+    tip_velocities_funcs[ZERO],
+    tip_velocities_funcs[POSITIVE],
+    )
 
 # force
-FORCE_VALUE_RANGE = 5
-def force_membership_func_neg(x):
-    return min(max(-x, 0) / FORCE_VALUE_RANGE, 1)
-def force_membership_func_zer(x):
-    return max(-abs(x) / FORCE_VALUE_RANGE + 1, 0)
-def force_membership_func_pos(x):
-    return min(max(x, 0) / FORCE_VALUE_RANGE, 1)
-
-force_domain = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 101)
-force_tups = Memebership_display_tuples(
-    force_domain,
-    force_membership_func_neg,
-    force_membership_func_zer,
-    force_membership_func_pos,
+FORCE_VALUE_RANGE = FORCE_DOMAIN
+FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
+force_funcs = Generic_membership_functions(FORCE_VALUE_RANGE)
+Display_membership_functions(
+    'Force',
+    FORCE_VALUE_DISPLAY_RANGE,
+    force_funcs[NEGATIVE],
+    force_funcs[ZERO],
+    force_funcs[POSITIVE],
     )
-Display_membership_functions('Force', *force_tups)
 
-plt.show()
+#plt.show()
 
 #########################################################
 # KONIEC KODU INICJUJĄCEGO
@@ -203,23 +170,23 @@ while not control.WantExit:
        zmiennych lingwistycznych. Jedno fizyczne wejście (źródło wartości zmierzonych, np. położenie wózka) posiada własną
        zmienną lingwistyczną.
     """
-    u_cart_position_neg = cart_position_func_neg(cart_position)
-    u_cart_position_zer = cart_position_func_zer(cart_position)
-    u_cart_position_pos = cart_position_func_pos(cart_position)
+    u_cart_position_neg = cart_position_funcs[NEGATIVE](cart_position)
+    u_cart_position_zer = cart_position_funcs[ZERO](cart_position)
+    u_cart_position_pos = cart_position_funcs[POSITIVE](cart_position)
+    print(f"pos neg: {u_cart_position_neg}, pos zer: {u_cart_position_zer}, pos pos: {u_cart_position_pos}")
+    u_cart_velocity_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
+    u_cart_velocity_zer = cart_velocity_funcs[ZERO](cart_velocity)
+    u_cart_velocity_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
     
-    u_cart_velocity_neg = cart_velocity_func_neg(cart_velocity)
-    u_cart_velocity_zer = cart_velocity_func_zer(cart_velocity)
-    u_cart_velocity_pos = cart_velocity_func_pos(cart_velocity)
-    
-    u_pole_angle_neg = pole_angle_membership_func_neg(pole_angle)
-    u_pole_angle_zer = pole_angle_membership_func_zer(pole_angle)
-    u_pole_angle_pos = pole_angle_membership_func_pos(pole_angle)
-    
-    u_tip_velocity_neg = tip_velocity_func_neg(tip_velocity)
-    u_tip_velocity_zer = tip_velocity_func_zer(tip_velocity)
-    u_tip_velocity_pos = tip_velocity_func_pos(tip_velocity)
-    
-           
+    u_pole_angle_neg = pole_angle_funcs[NEGATIVE](pole_angle)
+    u_pole_angle_zer = pole_angle_funcs[ZERO](pole_angle)
+    u_pole_angle_pos = pole_angle_funcs[POSITIVE](pole_angle)
+    print(f"ang neg: {u_pole_angle_neg}, ang zer: {u_pole_angle_zer}, ang pos: {u_pole_angle_pos}")
+    u_tip_velocity_neg = tip_velocities_funcs[NEGATIVE](tip_velocity)
+    u_tip_velocity_zer = tip_velocities_funcs[ZERO](tip_velocity)
+    u_tip_velocity_pos = tip_velocities_funcs[POSITIVE](tip_velocity)
+    print(f"tip_v neg: {u_tip_velocity_neg}, tip_v zer: {u_tip_velocity_zer}, tip_v pos: {u_tip_velocity_pos}")
+
     """
     2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
@@ -228,6 +195,8 @@ while not control.WantExit:
        (R0)JEŻELI kąt jest ujemny TO siła jest ujemn {R0 = u_pole_angle_neg} 
        (R1)JEŻELI kąt jest zerowy TO siła jest zerowa {R1 = u_pole_angle_zer}
        (R2)JEŻELI kąt jest dodatni TO siła jest dodatnia {R2 = u_pole_angle_pos}
+       
+       
        
        (pos, pr_c, kąt, pr_t)
        dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
@@ -254,22 +223,80 @@ while not control.WantExit:
            (R11)I pr_c dodatnia I pos dodatnia TO siła ujemna
        
        (R12)JEŻELI kąt zero I pr_t ujemna TO siła dodatnia
-       kąt zero I pr_t zero wyżej
+
        (R13)JEŻELI kąt zero I pr_t dodatnia TO siła ujemna
        
        (R14)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
        
        (R15)JEŻELI kąt dodatni I pr_t dodatnia I pr_c zero TO siła dodatnia
        (R16)JEŻELI kąt dodatni I pr_t dodatnia I pr_c dodatnia TO siła dodatnia
+       
+       
+       
+       (pos, kąt, pr_t)
+       dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
+       (R0)JEŻELI kąt ujemny I pr_t ujemna TO siła ujemna
+       (R1)JEŻELI kąt ujemny I pr_t zero TO siła ujemna
+       
+       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB (kąt zero I pr_t zero) LUB (kąt dodatni I pr_t ujemna)):
+           (R2)I pos ujemna TO siła dodatnia
+           (R3)I pos zero TO siła zero
+           (R4)I pos dodatnia TO siła ujemna
+           
+       (R5)JEŻELI kąt zero I pos ujemna TO siła dodatnia
+       (R6)JEŻELI kąt zero I pos zero TO siła zero
+       (R7)JEŻELI kąt zero I pos dodatnia TO siła ujemna
+       
+       (R8)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
+       (R9)JEŻELI kąt dodatni I pr_t dodatnia TO siła dodatnia
+       
+       (R10)JEŻELI pr_c ujemna TO siła dodatnia
+       (R11)JEŻELI pr_c zero TO siła zero
+       (R12)JEŻELI pr_c dodatnia TO siła ujemna
     """
-    
+    R0 = min(u_pole_angle_neg, u_tip_velocity_neg) # neg
+    R1 = min(u_pole_angle_neg, u_tip_velocity_zer) # neg
+    R2 = min(                                       # pos
+            max(
+                min(u_pole_angle_neg, u_tip_velocity_pos),
+                min(u_pole_angle_zer, u_tip_velocity_zer),
+                min(u_pole_angle_pos, u_tip_velocity_neg)
+                ),
+            u_cart_position_neg
+            ) 
+    R3 = min(                                       # zer
+            max(
+                min(u_pole_angle_neg, u_tip_velocity_pos),
+                min(u_pole_angle_zer, u_tip_velocity_zer),
+                min(u_pole_angle_pos, u_tip_velocity_neg)
+                ),
+            u_cart_position_zer
+            ) 
+    R4 = min(                                       # neg
+            max(
+                min(u_pole_angle_neg, u_tip_velocity_pos),
+                min(u_pole_angle_zer, u_tip_velocity_zer),
+                min(u_pole_angle_pos, u_tip_velocity_neg)
+                ),
+            u_cart_position_neg
+            ) 
+    R5 = min(u_pole_angle_zer, u_cart_position_neg) # pos
+    R6 = min(u_pole_angle_zer, u_cart_position_zer) # zer
+    R7 = min(u_pole_angle_zer, u_cart_position_pos) # neg
+    R8 = min(u_pole_angle_pos, u_tip_velocity_zer) # pos
+    R9 = min(u_pole_angle_pos, u_tip_velocity_pos) # pos
 
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
     """
-    # dla jednej zmiennej pole_angle nie ma tych samych konkluzji
+    unified_neg_rule = max(R0, R1, R4, R7)
+    #print(f"unified_neg_rule = {unified_neg_rule}")
+    unified_zer_rule = max(R3, R6)
+    #print(f"unified_zer_rule = {unified_zer_rule}")
+    unified_pos_rule = max(R2, R5, R8, R9)
+    #print(f"unified_pos_rule = {unified_pos_rule}")
     
     """
     4. Dla każdej reguły przeprowadź operację wnioskowania Mamdaniego.
@@ -281,9 +308,9 @@ while not control.WantExit:
        Uważaj - aktywacja wartości zmiennej lingwistycznej w konkluzji to nie liczba a zbiór rozmyty.
        Ponieważ stosujesz operator min(), to wynikiem będzie "przycięty od góry" zbiór rozmyty. 
     """
-    u_force_neg_prim = lambda y : min(R0, force_membership_func_neg(y))
-    u_force_zer_prim = lambda y : min(R1, force_membership_func_zer(y))
-    u_force_pos_prim = lambda y : min(R2, force_membership_func_pos(y))
+    u_force_neg_prim = lambda y : min(unified_neg_rule, force_funcs[NEGATIVE](y))
+    u_force_zer_prim = lambda y : min(unified_zer_rule, force_funcs[ZERO](y))
+    u_force_pos_prim = lambda y : min(unified_pos_rule, force_funcs[POSITIVE](y))
     
     """
     5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
