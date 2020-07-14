@@ -17,6 +17,11 @@ def Display_membership_functions(title, *functions):
     ax0.set_title(title)
     plt.tight_layout()
     
-def Compute_weighted_integral(func):
+def Compute_weighted_integral_force(func):
     exs = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 101)
     return sum([x * func(x) for x in exs]) / sum([func(x) for x in exs])
+
+def Memebership_display_tuples(values, *functions):
+    return ((values, functions[0], 'r', 'Negative'),
+            (values, functions[1], 'g', 'Zero'),
+            (values, functions[2], 'b', 'Positive'))
