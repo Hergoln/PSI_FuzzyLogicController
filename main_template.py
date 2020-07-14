@@ -230,9 +230,39 @@ while not control.WantExit:
        (R2)JEŻELI kąt jest dodatni TO siła jest dodatnia {R2 = u_pole_angle_pos}
        
        (pos, pr_c, kąt, pr_t)
-       dla zadania utrzymania kąta oraz pozycji:
+       dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
+           nie interesują nas sytuacje "kąt ujemny I pr_t ujemna I pr_c dodatnia" oraz "kąt dodatni I pr_t dodatnia I pr_c ujemna" <- nie da się z nich uciec
+       (R0)JEŻELI kąt ujemny I pr_t ujemna I pr_c zero TO siła ujemna
+       (R1)JEŻELI kąt ujemny I pr_t ujemna I pr_c ujemna TO siła ujemna
        
+       (R2)JEŻELI kąt ujemny I pr_t zero TO siła ujemna
+       
+       ## kiedy kij jest w stanie stabilizującym się to zajmujemy się pozycją
+       ## to może być kłopotliwe bo upraszczamy pewne sytuacje (np. "kąt dodatni I pr_t ujemna I pr_c dodatnia TO siła dodatnia" jest tutaj tym samym co
+                                                                    "kąt ujemny I pr_t dodatnia I pr_c dodatnia TO siła dodatnia" co jest lekkim wyrostem)
+       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB (kąt zero I pr_t zero) LUB (kąt dodatni I pr_t ujemna)):
+           (R3)I pr_c ujemna I pos ujemna TO siła dodatnia
+           (R4)I pr_c ujemna I pos zero TO siła dodatnia
+           (R5)I pr_c ujemna I pos dodatnia TO siła zero           
+           
+           (R6)I pr_c zero I pos ujemna TO siła dodatnia           
+           (R7)I pr_c zero I pos zero TO siła zero
+           (R8)I pr_c zero I pos dodatnia TO siła ujemna
+           
+           (R9)I pr_c dodatnia I pos ujemna TO siła zero
+           (R10)I pr_c dodatnia I pos zero TO siła ujemna
+           (R11)I pr_c dodatnia I pos dodatnia TO siła ujemna
+       
+       (R12)JEŻELI kąt zero I pr_t ujemna TO siła dodatnia
+       kąt zero I pr_t zero wyżej
+       (R13)JEŻELI kąt zero I pr_t dodatnia TO siła ujemna
+       
+       (R14)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
+       
+       (R15)JEŻELI kąt dodatni I pr_t dodatnia I pr_c zero TO siła dodatnia
+       (R16)JEŻELI kąt dodatni I pr_t dodatnia I pr_c dodatnia TO siła dodatnia
     """
+    
 
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
