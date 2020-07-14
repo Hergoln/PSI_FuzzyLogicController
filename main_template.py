@@ -49,22 +49,33 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 3. Wyświetl je, w celach diagnostycznych.
 """
 
+# cart_position
+# cart_velocity
+
 # pole_angle wystarczy do trzymania patyka w górze
 # pole_angle # <-Inf, +Inf> w zaleznosci od w ktora strone sie obroci w radianach no i oczywiscie powyze (i ponizej) PI/2 juz nie ma sensu probowac
 
 # te funkcje zapewniają, że kąt jest całokowicie pozytywny lub całkowicie negatywny przy 30 stopniach
 DEGREES_DIV = 24
 def pole_angle_membership_func_neg(x):
-    return min(max(-(x), 0) * DEGREES_DIV / np.pi, 1)
+    return min(max(-x, 0) * DEGREES_DIV / np.pi, 1)
 def pole_angle_membership_func_zer(x):
     return max((-abs(x)) * DEGREES_DIV / np.pi + 1, 0)
 def pole_angle_membership_func_pos(x):
     return min(max(x, 0) * DEGREES_DIV / np.pi, 1)
 
-angles = np.linspace(-np.pi / 4, np.pi / 4, 101)
+angles = np.linspace(-np.pi / 6, np.pi / 6, 101)
 pole_angle_tup_neg = (angles, pole_angle_membership_func_neg, 'r', 'Negative')
 pole_angle_tup_zer = (angles, pole_angle_membership_func_zer, 'g', 'Zero')
 pole_angle_tup_pos = (angles, pole_angle_membership_func_pos, 'b', 'Positive')
+
+# tip_velocity
+def tip_velocity_func_neg(x):
+    return -1
+def tip_velocity_func_zer(x):
+    return 0
+def tip_velocity_func_pos(x):
+    return 1
 
 
 
