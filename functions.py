@@ -47,3 +47,22 @@ def Generic_membership_functions(value_range):
     zer_func = lambda x: max(-abs(x) / value_range + 1, 0.0)
     pos_func = lambda x: min(max(x, 0.0) / value_range, 1.0)
     return {NEGATIVE : neg_func, ZERO : zer_func, POSITIVE : pos_func}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

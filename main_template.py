@@ -54,13 +54,13 @@ given = 0
 CART_POSITION_VALUES_RANGE = 0.2
 CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE + 2
 
-CART_VELOCITY_VALUES_RANGE = 0.2
+CART_VELOCITY_VALUES_RANGE = 1.0
 CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
 
-DEGREES_DIV = 64.0
+DEGREES_DIV = 12.0
 DEGREES_DISPLAY_RANGE = np.pi / 6.0
 
-TIP_VELOCITY_VALUES_RANGE = 0.1
+TIP_VELOCITY_VALUES_RANGE = 0.2
 TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
 
 FORCE_VALUE_RANGE = FORCE_DOMAIN
@@ -141,6 +141,7 @@ while not control.WantExit:
     #
     # Czy użytkownik chce zresetować symulację?
     if control.WantReset:
+        print("=RESET=")
         control.WantReset = False
         env.reset()
 
@@ -175,156 +176,225 @@ while not control.WantExit:
        zmiennych lingwistycznych. Jedno fizyczne wejście (źródło wartości zmierzonych, np. położenie wózka) posiada własną
        zmienną lingwistyczną.
     """
-    u_pole_angle_neg = pole_angle_funcs[NEGATIVE](pole_angle)
-    u_pole_angle_zer = pole_angle_funcs[ZERO](pole_angle)
-    u_pole_angle_pos = pole_angle_funcs[POSITIVE](pole_angle)
-    print(f"ang neg: {u_pole_angle_neg:8.4f}, ang zer: {u_pole_angle_zer:8.4f}, ang pos: {u_pole_angle_pos:8.4f}")
-    u_tip_velocity_neg = tip_velocities_funcs[NEGATIVE](tip_velocity)
-    u_tip_velocity_zer = tip_velocities_funcs[ZERO](tip_velocity)
-    u_tip_velocity_pos = tip_velocities_funcs[POSITIVE](tip_velocity)
-    print(f"tiv neg: {u_tip_velocity_neg:8.4f}, tiv zer: {u_tip_velocity_zer:8.4f}, tiv pos: {u_tip_velocity_pos:8.4f}")
-    u_cart_velocity_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
-    u_cart_velocity_zer = cart_velocity_funcs[ZERO](cart_velocity)
-    u_cart_velocity_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
-    print(f"cav neg: {u_cart_velocity_neg:8.4f}, cav zer: {u_cart_velocity_zer:8.4f}, cav pos: {u_cart_velocity_pos:8.4f}")
-    u_cart_position_neg = cart_position_funcs[NEGATIVE](cart_position)
-    u_cart_position_zer = cart_position_funcs[ZERO](cart_position)
-    u_cart_position_pos = cart_position_funcs[POSITIVE](cart_position)
-    print(f"pos neg: {u_cart_position_neg:8.4f}, pos zer: {u_cart_position_zer:8.4f}, pos pos: {u_cart_position_pos:8.4f}")
+    ang_neg = pole_angle_funcs[NEGATIVE](pole_angle)
+    ang_zer = pole_angle_funcs[ZERO](pole_angle)
+    ang_pos = pole_angle_funcs[POSITIVE](pole_angle)
+    print(f"ang neg: {ang_neg:8.4f}, ang zer: {ang_zer:8.4f}, ang pos: {ang_pos:8.4f}")
+    tip_v_neg = tip_velocities_funcs[NEGATIVE](tip_velocity)
+    tip_v_zer = tip_velocities_funcs[ZERO](tip_velocity)
+    tip_v_pos = tip_velocities_funcs[POSITIVE](tip_velocity)
+    print(f"tiv neg: {tip_v_neg:8.4f}, tiv zer: {tip_v_zer:8.4f}, tiv pos: {tip_v_pos:8.4f}")
+    cart_v_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
+    cart_v_zer = cart_velocity_funcs[ZERO](cart_velocity)
+    cart_v_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
+    print(f"cav neg: {cart_v_neg:8.4f}, cav zer: {cart_v_zer:8.4f}, cav pos: {cart_v_pos:8.4f}")
+    pos_neg = cart_position_funcs[NEGATIVE](cart_position)
+    pos_zer = cart_position_funcs[ZERO](cart_position)
+    pos_pos = cart_position_funcs[POSITIVE](cart_position)
+    print(f"pos neg: {pos_neg:8.4f}, pos zer: {pos_zer:8.4f}, pos pos: {pos_pos:8.4f}")
     
 
     """
     2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
-
-       dla samego pole_angle:
-       (R0)JEŻELI kąt jest ujemny TO siła jest ujemn {R0 = u_pole_angle_neg} 
-       (R1)JEŻELI kąt jest zerowy TO siła jest zerowa {R1 = u_pole_angle_zer}
-       (R2)JEŻELI kąt jest dodatni TO siła jest dodatnia {R2 = u_pole_angle_pos}
+       TEORETYCZNIE POWINIENEM DOSAĆ 54 REGUŁY
+       (kąt, pr_t, pos, pr_c)
+       (R0) IF kąt neg I pr_t neg I pos neg I pr_c neg TO s neg
+       (R1) IF kąt neg I pr_t neg I pos neg I pr_c zer TO s neg
+       (R2) IF kąt neg I pr_t neg I pos neg I pr_c pos TO s neg
+       
+       (R3) IF kąt neg I pr_t neg I pos zer I pr_c neg TO s neg
+       (R4) IF kąt neg I pr_t neg I pos zer I pr_c zer TO s neg
+       (R5) IF kąt neg I pr_t neg I pos zer I pr_c pos TO s neg
+       
+       (R6) IF kąt neg I pr_t neg I pos pos I pr_c neg TO s neg
+       (R7) IF kąt neg I pr_t neg I pos pos I pr_c zer TO s neg
+       (R8) IF kąt neg I pr_t neg I pos pos I pr_c pos TO s neg
+       
+       #nie jestem przekonany co do pr_t = zer ====
+       (R9) IF kąt neg I pr_t zer I pos neg I pr_c neg TO s zer
+       (R10)IF kąt neg I pr_t zer I pos neg I pr_c zer TO s neg
+       (R11)IF kąt neg I pr_t zer I pos neg I pr_c pos TO s neg
+       
+       (R12)IF kąt neg I pr_t zer I pos zer I pr_c neg TO s neg
+       (R13)IF kąt neg I pr_t zer I pos zer I pr_c zer TO s neg
+       (R14)IF kąt neg I pr_t zer I pos zer I pr_c pos TO s neg
+       
+       (R15)IF kąt neg I pr_t zer I pos pos I pr_c neg TO s neg
+       (R16)IF kąt neg I pr_t zer I pos pos I pr_c zer TO s neg
+       (R17)IF kąt neg I pr_t zer I pos pos I pr_c pos TO s neg
+       #====
+       
+       (R18)IF kąt neg I pr_t pos I pos neg I pr_c neg TO s pos
+       (R19)IF kąt neg I pr_t pos I pos neg I pr_c zer TO s pos
+       (R20)IF kąt neg I pr_t pos I pos neg I pr_c pos TO s zer
+       
+       (R21)IF kąt neg I pr_t pos I pos zer I pr_c neg TO s zer
+       (R22)IF kąt neg I pr_t pos I pos zer I pr_c zer TO s zer
+       (R23)IF kąt neg I pr_t pos I pos zer I pr_c pos TO s neg
+       
+       (R24)IF kąt neg I pr_t pos I pos pos I pr_c neg TO s neg
+       (R25)IF kąt neg I pr_t pos I pos pos I pr_c zer TO s neg
+       (R26)IF kąt neg I pr_t pos I pos pos I pr_c pos TO s neg
        
        
+       (R27)IF kąt zer I pos neg I pr_c neg TO s pos
+       (R28)IF kąt zer I pos neg I pr_c zer TO s pos
+       (R29)IF kąt zer I pos neg I pr_c pos TO s zer
        
-       (pos, pr_c, kąt, pr_t)
-       dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
-       (R0)JEŻELI kąt ujemny I pr_t ujemna I pr_c ujemna TO siła zer
-       (R1)JEŻELI kąt ujemny I pr_t ujemna I pr_c zero TO siła ujemna
-       (R2)JEŻELI kąt ujemny I pr_t ujemna I pr_c dodatnia TO siła ujemna
+       (R30)IF kąt zer I pos zer I pr_c neg TO s pos
+       (R31)IF kąt zer I pos zer I pr_c zer TO s zer
+       (R32)IF kąt zer I pos zer I pr_c pos TO s neg
        
-       
-       (R3)JEŻELI kąt ujemny I pr_t zero I pr_c ujemna TO siła zero
-       (R4)JEŻELI kąt ujemny I pr_t zero I pr_c zero TO siła zero
-       
-       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB
-       kąt zero LUB
-       (kąt dodatni I pr_t ujemna)):
-           (R3)I pr_c ujemna I pos ujemna TO siła dodatnia
-           (R4)I pr_c ujemna I pos zero TO siła dodatnia
-           (R5)I pr_c ujemna I pos dodatnia TO siła zero           
-           
-           (R6)I pr_c zero I pos ujemna TO siła dodatnia           
-           (R7)I pr_c zero I pos zero TO siła zero
-           (R8)I pr_c zero I pos dodatnia TO siła ujemna
-           
-           (R9)I pr_c dodatnia I pos ujemna TO siła zero
-           (R10)I pr_c dodatnia I pos zero TO siła ujemna
-           (R11)I pr_c dodatnia I pos dodatnia TO siła ujemna
+       (R33)IF kąt zer I pos pos I pr_c neg TO s zer
+       (R34)IF kąt zer I pos pos I pr_c zer TO s neg
+       (R35)IF kąt zer I pos pos I pr_c pos TO s neg
        
        
-       (R12)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
+       (R36)IF kąt pos I pr_t neg I pos neg I pr_c neg TO s pos
+       (R37)IF kąt pos I pr_t neg I pos neg I pr_c zer TO s pos
+       (R38)IF kąt pos I pr_t neg I pos neg I pr_c pos TO s pos
        
-       (R13)JEŻELI kąt dodatni I pr_t dodatnia I pr_c zero TO siła dodatnia
-       (R14)JEŻELI kąt dodatni I pr_t dodatnia I pr_c dodatnia TO siła zer
+       (R39)IF kąt pos I pr_t neg I pos zer I pr_c neg TO s pos
+       (R40)IF kąt pos I pr_t neg I pos zer I pr_c zer TO s zer
+       (R41)IF kąt pos I pr_t neg I pos zer I pr_c pos TO s zer
        
+       (R42)IF kąt pos I pr_t neg I pos pos I pr_c neg TO s zer
+       (R43)IF kąt pos I pr_t neg I pos pos I pr_c zer TO s neg
+       (R44)IF kąt pos I pr_t neg I pos pos I pr_c pos TO s neg
        
+       (R45)IF kąt pos I pr_t zer I pos neg I pr_c neg TO s pos
+       (R46)IF kąt pos I pr_t zer I pos neg I pr_c zer TO s pos
+       (R47)IF kąt pos I pr_t zer I pos neg I pr_c pos TO s pos
        
-       (pos, kąt, pr_t)
-       dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
-       (R0)JEŻELI kąt ujemny I pr_t ujemna TO siła ujemna
-       (R1)JEŻELI kąt ujemny I pr_t zero TO siła ujemna
+       (R48)IF kąt pos I pr_t zer I pos zer I pr_c neg TO s pos
+       (R49)IF kąt pos I pr_t zer I pos zer I pr_c zer TO s pos
+       (R50)IF kąt pos I pr_t zer I pos zer I pr_c pos TO s pos
        
-       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB (kąt zero I pr_t zero) LUB (kąt dodatni I pr_t ujemna)):
-           (R2)I pos ujemna TO siła dodatnia
-           (R3)I pos zero TO siła zero
-           (R4)I pos dodatnia TO siła ujemna
-           
-       (R5)JEŻELI kąt zero I pos ujemna TO siła dodatnia
-       (R6)JEŻELI kąt zero I pos zero TO siła zero
-       (R7)JEŻELI kąt zero I pos dodatnia TO siła ujemna
+       (R51)IF kąt pos I pr_t zer I pos pos I pr_c neg TO s pos
+       (R52)IF kąt pos I pr_t zer I pos pos I pr_c zer TO s pos
+       (R53)IF kąt pos I pr_t zer I pos pos I pr_c pos TO s zer
        
-       (R8)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
-       (R9)JEŻELI kąt dodatni I pr_t dodatnia TO siła dodatnia
+       (R54)IF kąt pos I pr_t pos I pos neg I pr_c neg TO s pos
+       (R55)IF kąt pos I pr_t pos I pos neg I pr_c zer TO s pos
+       (R56)IF kąt pos I pr_t pos I pos neg I pr_c pos TO s pos
+       
+       (R57)IF kąt pos I pr_t pos I pos zer I pr_c neg TO s pos
+       (R58)IF kąt pos I pr_t pos I pos zer I pr_c zer TO s pos
+       (R59)IF kąt pos I pr_t pos I pos zer I pr_c pos TO s pos
+       
+       (R60)IF kąt pos I pr_t pos I pos pos I pr_c neg TO s pos
+       (R61)IF kąt pos I pr_t pos I pos pos I pr_c zer TO s pos
+       (R62)IF kąt pos I pr_t pos I pos pos I pr_c pos TO s pos
     """
     
-    """
-    dla (pos, kąt, pr_t)
-    R0 = min(u_pole_angle_neg, u_tip_velocity_neg) # neg
-    R1 = min(u_pole_angle_neg, u_tip_velocity_zer) # neg
-    R2 = min(                                       # pos
-            max(
-                min(u_pole_angle_neg, u_tip_velocity_pos),
-                min(u_pole_angle_zer, u_tip_velocity_zer),
-                min(u_pole_angle_pos, u_tip_velocity_neg)
-                ),
-            u_cart_position_neg
-            ) 
-    R3 = min(                                       # zer
-            max(
-                min(u_pole_angle_neg, u_tip_velocity_pos),
-                min(u_pole_angle_zer, u_tip_velocity_zer),
-                min(u_pole_angle_pos, u_tip_velocity_neg)
-                ),
-            u_cart_position_zer
-            ) 
-    R4 = min(                                       # neg
-            max(
-                min(u_pole_angle_neg, u_tip_velocity_pos),
-                min(u_pole_angle_zer, u_tip_velocity_zer),
-                min(u_pole_angle_pos, u_tip_velocity_neg)
-                ),
-            u_cart_position_neg
-            ) 
-    R5 = min(u_pole_angle_zer, u_cart_position_neg) # pos
-    R6 = min(u_pole_angle_zer, u_cart_position_zer) # zer
-    R7 = min(u_pole_angle_zer, u_cart_position_pos) # neg
-    R8 = min(u_pole_angle_pos, u_tip_velocity_zer) # pos
-    R9 = min(u_pole_angle_pos, u_tip_velocity_pos) # pos
-    """
+    R0 = min(ang_neg, tip_v_neg, pos_neg, cart_v_neg) #zer
+    R1 = min(ang_neg, tip_v_neg, pos_neg, cart_v_zer) #neg
+    R2 = min(ang_neg, tip_v_neg, pos_neg, cart_v_pos) #neg
     
-    R0 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_neg) # zer
-    R1 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_zer) # neg
-    R2 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_pos) # neg
+    R3 = min(ang_neg, tip_v_neg, pos_zer, cart_v_neg) #zer
+    R4 = min(ang_neg, tip_v_neg, pos_zer, cart_v_zer) #neg
+    R5 = min(ang_neg, tip_v_neg, pos_zer, cart_v_pos) #neg
     
-    R3 = min(u_pole_angle_neg, u_tip_velocity_zer, u_cart_velocity_neg) # zer
+    R6 = min(ang_neg, tip_v_neg, pos_pos, cart_v_neg) #neg
+    R7 = min(ang_neg, tip_v_neg, pos_pos, cart_v_zer) #neg
+    R8 = min(ang_neg, tip_v_neg, pos_pos, cart_v_pos) #neg
     
-    BIG_OR = max(
-                min(u_pole_angle_neg, u_tip_velocity_pos),
-                u_pole_angle_zer,
-                min(u_pole_angle_pos, u_tip_velocity_neg)
-                )
-    R3 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_neg) # pos
-    R4 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_zer) # pos
-    R5 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_pos) # zer
-    R6 = min(BIG_OR, u_cart_velocity_zer, u_cart_position_neg) # pos
-    R7 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_zer) # zer
-    R8 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_pos) # neg
-    R9 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_neg) # zer
-    R10 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_zer) # neg
-    R11 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_pos) # neg
+    R9 = min(ang_neg, tip_v_zer, pos_neg, cart_v_neg) #pos
+    R10 = min(ang_neg, tip_v_zer, pos_neg, cart_v_zer) #neg
+    R11 = min(ang_neg, tip_v_zer, pos_neg, cart_v_pos) #neg
     
-    R12 = min(u_pole_angle_pos, u_tip_velocity_zer) # pos
-    R13 = min(u_pole_angle_pos, u_tip_velocity_pos, u_cart_velocity_zer) # pos
-    R14 = min(u_pole_angle_pos, u_tip_velocity_pos, u_cart_velocity_pos) # pos
+    R12 = min(ang_neg, tip_v_zer, pos_zer, cart_v_neg) #neg
+    R13 = min(ang_neg, tip_v_zer, pos_zer, cart_v_zer) #neg
+    R14 = min(ang_neg, tip_v_zer, pos_zer, cart_v_pos) #neg
+    
+    R15 = min(ang_neg, tip_v_zer, pos_pos, cart_v_neg) #neg
+    R16 = min(ang_neg, tip_v_zer, pos_pos, cart_v_zer) #neg
+    R17 = min(ang_neg, tip_v_zer, pos_pos, cart_v_pos) #neg
+    
+    R18 = min(ang_neg, tip_v_pos, pos_neg, cart_v_neg) #pos
+    R19 = min(ang_neg, tip_v_pos, pos_neg, cart_v_zer) #pos
+    R20 = min(ang_neg, tip_v_pos, pos_neg, cart_v_pos) #zer
+    
+    R21 = min(ang_neg, tip_v_pos, pos_zer, cart_v_neg) #zer
+    R22 = min(ang_neg, tip_v_pos, pos_zer, cart_v_zer) #zer
+    R23 = min(ang_neg, tip_v_pos, pos_zer, cart_v_pos) #neg
+    
+    R24 = min(ang_neg, tip_v_pos, pos_pos, cart_v_neg) #zer
+    R25 = min(ang_neg, tip_v_pos, pos_pos, cart_v_zer) #neg
+    R26 = min(ang_neg, tip_v_pos, pos_pos, cart_v_pos) #neg
+    
+    R27 = min(ang_zer, pos_neg, cart_v_neg) #pos
+    R28 = min(ang_zer, pos_neg, cart_v_zer) #pos
+    R29 = min(ang_zer, pos_neg, cart_v_pos) #zer
+    
+    R30 = min(ang_zer, pos_zer, cart_v_neg) #pos
+    R31 = min(ang_zer, pos_zer, cart_v_zer) #zer
+    R32 = min(ang_zer, pos_zer, cart_v_pos) #neg
+    
+    R33 = min(ang_zer, pos_pos, cart_v_neg) #zer
+    R34 = min(ang_zer, pos_pos, cart_v_zer) #neg
+    R35 = min(ang_zer, pos_pos, cart_v_pos) #neg
+    
+    R36 = min(ang_pos, tip_v_neg, pos_neg, cart_v_neg) #pos
+    R37 = min(ang_pos, tip_v_neg, pos_neg, cart_v_zer) #pos
+    R38 = min(ang_pos, tip_v_neg, pos_neg, cart_v_pos) #zer
+    
+    R39 = min(ang_pos, tip_v_neg, pos_zer, cart_v_neg) #pos
+    R40 = min(ang_pos, tip_v_neg, pos_zer, cart_v_zer) #zer
+    R41 = min(ang_pos, tip_v_neg, pos_zer, cart_v_pos) #zer
+    
+    R42 = min(ang_pos, tip_v_neg, pos_pos, cart_v_neg) #zer
+    R43 = min(ang_pos, tip_v_neg, pos_pos, cart_v_zer) #neg
+    R44 = min(ang_pos, tip_v_neg, pos_pos, cart_v_pos) #neg
+    
+    R45 = min(ang_pos, tip_v_zer, pos_neg, cart_v_neg) #pos
+    R46 = min(ang_pos, tip_v_zer, pos_neg, cart_v_zer) #pos
+    R47 = min(ang_pos, tip_v_zer, pos_neg, cart_v_pos) #pos
+    
+    R48 = min(ang_pos, tip_v_zer, pos_zer, cart_v_neg) #pos
+    R49 = min(ang_pos, tip_v_zer, pos_zer, cart_v_zer) #pos
+    R50 = min(ang_pos, tip_v_zer, pos_zer, cart_v_pos) #pos
+    
+    R51 = min(ang_pos, tip_v_zer, pos_pos, cart_v_neg) #pos
+    R52 = min(ang_pos, tip_v_zer, pos_pos, cart_v_zer) #pos
+    R53 = min(ang_pos, tip_v_zer, pos_pos, cart_v_pos) #neg
+    
+    R54 = min(ang_pos, tip_v_pos, pos_neg, cart_v_neg) #pos
+    R55 = min(ang_pos, tip_v_pos, pos_neg, cart_v_zer) #pos
+    R56 = min(ang_pos, tip_v_pos, pos_neg, cart_v_pos) #pos
+    
+    R57 = min(ang_pos, tip_v_pos, pos_zer, cart_v_neg) #pos
+    R58 = min(ang_pos, tip_v_pos, pos_zer, cart_v_zer) #pos
+    R59 = min(ang_pos, tip_v_pos, pos_zer, cart_v_pos) #zer
+    
+    R60 = min(ang_pos, tip_v_pos, pos_pos, cart_v_neg) #pos
+    R61 = min(ang_pos, tip_v_pos, pos_pos, cart_v_zer) #pos
+    R62 = min(ang_pos, tip_v_pos, pos_pos, cart_v_pos) #zer
     
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
     """
-    unified_neg_rule = max(R0, R1, R2, R8, R10, R11)
+    unified_neg_rule = max(R0, R1, R2, R3, R4, R5,
+                           R6, R7, R8, R10,
+                           R11, R12, R13, R14,
+                           R15, R16, R17, R23, R24,
+                           R25, R26, R32, R34, R35,
+                           R43, R44)
     print(f"unified_neg_rule = {unified_neg_rule}")
-    unified_zer_rule = max(R5, R7, R9)
+    unified_zer_rule = max(R9, R20, R21,
+                           R22, R29,
+                           R31, R33,
+                           R40, R41, R42)
     print(f"unified_zer_rule = {unified_zer_rule}")
-    unified_pos_rule = max(R3, R4, R6, R12, R13, R14)
+    unified_pos_rule = max(R18, R19, R27, R28, 
+                           R30, R36, R37, R38, R39,
+                           R45, R46, R47, R48,
+                           R49, R50, R51, R52, R53,
+                           R54, R55, R56, R57,
+                           R58, R59, R60, R61, R62)
     print(f"unified_pos_rule = {unified_pos_rule}")
     
     """
@@ -357,6 +427,7 @@ while not control.WantExit:
     """
 
     fuzzy_response = temp_fuzzy_response # do zmiennej fuzzy_response zapisz wartość siły, jaką chcesz przyłożyć do wózka.
+    
     #
     # KONIEC algorytmu regulacji
     #########################
