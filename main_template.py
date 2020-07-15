@@ -49,10 +49,23 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 3. Wyświetl je, w celach diagnostycznych.
 """
 
-# cart_position
+
 given = 0
-CART_POSITION_VALUES_RANGE = 0.5
+CART_POSITION_VALUES_RANGE = 0.2
 CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE + 2
+
+CART_VELOCITY_VALUES_RANGE = 0.2
+CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
+
+DEGREES_DIV = 64.0
+DEGREES_DISPLAY_RANGE = np.pi / 6.0
+
+TIP_VELOCITY_VALUES_RANGE = 0.1
+TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
+
+FORCE_VALUE_RANGE = FORCE_DOMAIN
+FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
+# cart_position
 cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE - given)
 Display_membership_functions(
     'Cart position',
@@ -63,8 +76,6 @@ Display_membership_functions(
     )
 
 # cart_velocity
-CART_VELOCITY_VALUES_RANGE = 0.2
-CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
 cart_velocity_funcs = Generic_membership_functions(CART_VELOCITY_VALUES_RANGE)
 Display_membership_functions(
     'Cart velocity',
@@ -75,8 +86,6 @@ Display_membership_functions(
     )
 
 # pole_angle 
-DEGREES_DIV = 24.0
-DEGREES_DISPLAY_RANGE = np.pi / 6.0
 pole_angle_funcs = Generic_membership_functions(np.pi / DEGREES_DIV)
 Display_membership_functions(
     'Angle',
@@ -87,8 +96,6 @@ Display_membership_functions(
     )
 
 # tip_velocity
-TIP_VELOCITY_VALUES_RANGE = 0.5
-TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
 tip_velocities_funcs = Generic_membership_functions(TIP_VELOCITY_VALUES_RANGE)
 Display_membership_functions(
     'Tip velocity',
@@ -99,8 +106,6 @@ Display_membership_functions(
     )
 
 # force
-FORCE_VALUE_RANGE = FORCE_DOMAIN
-FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
 force_funcs = Generic_membership_functions(FORCE_VALUE_RANGE)
 Display_membership_functions(
     'Force',
@@ -170,22 +175,23 @@ while not control.WantExit:
        zmiennych lingwistycznych. Jedno fizyczne wejście (źródło wartości zmierzonych, np. położenie wózka) posiada własną
        zmienną lingwistyczną.
     """
-    u_cart_position_neg = cart_position_funcs[NEGATIVE](cart_position)
-    u_cart_position_zer = cart_position_funcs[ZERO](cart_position)
-    u_cart_position_pos = cart_position_funcs[POSITIVE](cart_position)
-    print(f"pos neg: {u_cart_position_neg}, pos zer: {u_cart_position_zer}, pos pos: {u_cart_position_pos}")
-    u_cart_velocity_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
-    u_cart_velocity_zer = cart_velocity_funcs[ZERO](cart_velocity)
-    u_cart_velocity_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
-    
     u_pole_angle_neg = pole_angle_funcs[NEGATIVE](pole_angle)
     u_pole_angle_zer = pole_angle_funcs[ZERO](pole_angle)
     u_pole_angle_pos = pole_angle_funcs[POSITIVE](pole_angle)
-    print(f"ang neg: {u_pole_angle_neg}, ang zer: {u_pole_angle_zer}, ang pos: {u_pole_angle_pos}")
+    print(f"ang neg: {u_pole_angle_neg:8.4f}, ang zer: {u_pole_angle_zer:8.4f}, ang pos: {u_pole_angle_pos:8.4f}")
     u_tip_velocity_neg = tip_velocities_funcs[NEGATIVE](tip_velocity)
     u_tip_velocity_zer = tip_velocities_funcs[ZERO](tip_velocity)
     u_tip_velocity_pos = tip_velocities_funcs[POSITIVE](tip_velocity)
-    print(f"tip_v neg: {u_tip_velocity_neg}, tip_v zer: {u_tip_velocity_zer}, tip_v pos: {u_tip_velocity_pos}")
+    print(f"tiv neg: {u_tip_velocity_neg:8.4f}, tiv zer: {u_tip_velocity_zer:8.4f}, tiv pos: {u_tip_velocity_pos:8.4f}")
+    u_cart_velocity_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
+    u_cart_velocity_zer = cart_velocity_funcs[ZERO](cart_velocity)
+    u_cart_velocity_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
+    print(f"cav neg: {u_cart_velocity_neg:8.4f}, cav zer: {u_cart_velocity_zer:8.4f}, cav pos: {u_cart_velocity_pos:8.4f}")
+    u_cart_position_neg = cart_position_funcs[NEGATIVE](cart_position)
+    u_cart_position_zer = cart_position_funcs[ZERO](cart_position)
+    u_cart_position_pos = cart_position_funcs[POSITIVE](cart_position)
+    print(f"pos neg: {u_cart_position_neg:8.4f}, pos zer: {u_cart_position_zer:8.4f}, pos pos: {u_cart_position_pos:8.4f}")
+    
 
     """
     2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
@@ -200,16 +206,17 @@ while not control.WantExit:
        
        (pos, pr_c, kąt, pr_t)
        dla zadania utrzymania kąta oraz pozycji (stabilnosc ma priorytet):
-           nie interesują nas sytuacje "kąt ujemny I pr_t ujemna I pr_c dodatnia" oraz "kąt dodatni I pr_t dodatnia I pr_c ujemna" <- nie da się z nich uciec
-       (R0)JEŻELI kąt ujemny I pr_t ujemna I pr_c zero TO siła ujemna
-       (R1)JEŻELI kąt ujemny I pr_t ujemna I pr_c ujemna TO siła ujemna
+       (R0)JEŻELI kąt ujemny I pr_t ujemna I pr_c ujemna TO siła zer
+       (R1)JEŻELI kąt ujemny I pr_t ujemna I pr_c zero TO siła ujemna
+       (R2)JEŻELI kąt ujemny I pr_t ujemna I pr_c dodatnia TO siła ujemna
        
-       (R2)JEŻELI kąt ujemny I pr_t zero TO siła ujemna
        
-       ## kiedy kij jest w stanie stabilizującym się to zajmujemy się pozycją
-       ## to może być kłopotliwe bo upraszczamy pewne sytuacje (np. "kąt dodatni I pr_t ujemna I pr_c dodatnia TO siła dodatnia" jest tutaj tym samym co
-                                                                    "kąt ujemny I pr_t dodatnia I pr_c dodatnia TO siła dodatnia" co jest lekkim wyrostem)
-       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB (kąt zero I pr_t zero) LUB (kąt dodatni I pr_t ujemna)):
+       (R3)JEŻELI kąt ujemny I pr_t zero I pr_c ujemna TO siła zero
+       (R4)JEŻELI kąt ujemny I pr_t zero I pr_c zero TO siła zero
+       
+       JEŻELI ((kąt ujemny I pr_t dodatnia) LUB
+       kąt zero LUB
+       (kąt dodatni I pr_t ujemna)):
            (R3)I pr_c ujemna I pos ujemna TO siła dodatnia
            (R4)I pr_c ujemna I pos zero TO siła dodatnia
            (R5)I pr_c ujemna I pos dodatnia TO siła zero           
@@ -222,14 +229,11 @@ while not control.WantExit:
            (R10)I pr_c dodatnia I pos zero TO siła ujemna
            (R11)I pr_c dodatnia I pos dodatnia TO siła ujemna
        
-       (R12)JEŻELI kąt zero I pr_t ujemna TO siła dodatnia
-
-       (R13)JEŻELI kąt zero I pr_t dodatnia TO siła ujemna
        
-       (R14)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
+       (R12)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
        
-       (R15)JEŻELI kąt dodatni I pr_t dodatnia I pr_c zero TO siła dodatnia
-       (R16)JEŻELI kąt dodatni I pr_t dodatnia I pr_c dodatnia TO siła dodatnia
+       (R13)JEŻELI kąt dodatni I pr_t dodatnia I pr_c zero TO siła dodatnia
+       (R14)JEŻELI kąt dodatni I pr_t dodatnia I pr_c dodatnia TO siła zer
        
        
        
@@ -249,11 +253,10 @@ while not control.WantExit:
        
        (R8)JEŻELI kąt dodatni I pr_t zero TO siła dodatnia
        (R9)JEŻELI kąt dodatni I pr_t dodatnia TO siła dodatnia
-       
-       (R10)JEŻELI pr_c ujemna TO siła dodatnia
-       (R11)JEŻELI pr_c zero TO siła zero
-       (R12)JEŻELI pr_c dodatnia TO siła ujemna
     """
+    
+    """
+    dla (pos, kąt, pr_t)
     R0 = min(u_pole_angle_neg, u_tip_velocity_neg) # neg
     R1 = min(u_pole_angle_neg, u_tip_velocity_zer) # neg
     R2 = min(                                       # pos
@@ -285,18 +288,44 @@ while not control.WantExit:
     R7 = min(u_pole_angle_zer, u_cart_position_pos) # neg
     R8 = min(u_pole_angle_pos, u_tip_velocity_zer) # pos
     R9 = min(u_pole_angle_pos, u_tip_velocity_pos) # pos
-
+    """
+    
+    R0 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_neg) # zer
+    R1 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_zer) # neg
+    R2 = min(u_pole_angle_neg, u_tip_velocity_neg, u_cart_velocity_pos) # neg
+    
+    R3 = min(u_pole_angle_neg, u_tip_velocity_zer, u_cart_velocity_neg) # zer
+    
+    BIG_OR = max(
+                min(u_pole_angle_neg, u_tip_velocity_pos),
+                u_pole_angle_zer,
+                min(u_pole_angle_pos, u_tip_velocity_neg)
+                )
+    R3 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_neg) # pos
+    R4 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_zer) # pos
+    R5 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_pos) # zer
+    R6 = min(BIG_OR, u_cart_velocity_zer, u_cart_position_neg) # pos
+    R7 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_zer) # zer
+    R8 = min(BIG_OR, u_cart_velocity_neg, u_cart_position_pos) # neg
+    R9 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_neg) # zer
+    R10 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_zer) # neg
+    R11 = min(BIG_OR, u_cart_velocity_pos, u_cart_position_pos) # neg
+    
+    R12 = min(u_pole_angle_pos, u_tip_velocity_zer) # pos
+    R13 = min(u_pole_angle_pos, u_tip_velocity_pos, u_cart_velocity_zer) # pos
+    R14 = min(u_pole_angle_pos, u_tip_velocity_pos, u_cart_velocity_pos) # pos
+    
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
     """
-    unified_neg_rule = max(R0, R1, R4, R7)
-    #print(f"unified_neg_rule = {unified_neg_rule}")
-    unified_zer_rule = max(R3, R6)
-    #print(f"unified_zer_rule = {unified_zer_rule}")
-    unified_pos_rule = max(R2, R5, R8, R9)
-    #print(f"unified_pos_rule = {unified_pos_rule}")
+    unified_neg_rule = max(R0, R1, R2, R8, R10, R11)
+    print(f"unified_neg_rule = {unified_neg_rule}")
+    unified_zer_rule = max(R5, R7, R9)
+    print(f"unified_zer_rule = {unified_zer_rule}")
+    unified_pos_rule = max(R3, R4, R6, R12, R13, R14)
+    print(f"unified_pos_rule = {unified_pos_rule}")
     
     """
     4. Dla każdej reguły przeprowadź operację wnioskowania Mamdaniego.
@@ -342,7 +371,7 @@ while not control.WantExit:
     #
     # Wyświetl stan środowiska oraz wartość odpowiedzi regulatora na ten stan.
     print(
-        f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={applied_force:8.4f}")
+        f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={applied_force:8.4f}\n")
 
     #
     # Wykonaj krok symulacji

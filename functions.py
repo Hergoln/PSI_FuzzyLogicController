@@ -27,11 +27,14 @@ def Display_membership_functions(title, value_range, *functions):
 def Compute_weighted_integral_force(func):
     exs = np.linspace(-FORCE_DOMAIN, FORCE_DOMAIN, 51)
     weights = sum([func(x) for x in exs])
-    # nie wiem czy ta suma w ogóle powinna mieć kiedykolwiek zerową sumę wag :/
-    if weights == 0:
-        print("weights is 0")
-        return 0
     value = sum([x * func(x) for x in exs])
+    # nie wiem czy ta suma w ogóle powinna mieć kiedykolwiek zerową sumę wag :/
+    if weights == 0:    
+        if value > 0:
+            return FORCE_DOMAIN
+        else:
+            return -FORCE_DOMAIN
+        
     return  value / weights
 
 def Memebership_display_tuples(functions):
