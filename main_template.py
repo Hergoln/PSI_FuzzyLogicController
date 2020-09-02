@@ -63,7 +63,7 @@ DEGREES_DISPLAY_RANGE = np.pi / 6.0
 TIP_VELOCITY_VALUES_RANGE = 0.2
 TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
 
-FORCE_VALUE_RANGE = FORCE_DOMAIN
+FORCE_VALUE_RANGE = 12
 FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
 # cart_position
 cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE - given)
@@ -197,7 +197,7 @@ while not control.WantExit:
     """
     2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
-       TEORETYCZNIE POWINIENEM DOSAĆ 54 REGUŁY
+       TEORETYCZNIE POWINIENEM DODAĆ 54 REGUŁY
        (kąt, pr_t, pos, pr_c)
        (R0) IF kąt neg I pr_t neg I pos neg I pr_c neg TO s neg
        (R1) IF kąt neg I pr_t neg I pos neg I pr_c zer TO s neg
@@ -243,7 +243,9 @@ while not control.WantExit:
        (R29)IF kąt zer I pos neg I pr_c pos TO s zer
        
        (R30)IF kąt zer I pos zer I pr_c neg TO s pos
-       (R31)IF kąt zer I pos zer I pr_c zer TO s zer
+       (R31)IF kąt zer I pr_t neg I pos zer I pr_c zer TO s pos
+       (R63)IF kąt zer I pr_t zer I pos zer I pr_c zer TO s zer
+       (R64)IF kąt zer I pr_t pos I pos zer I pr_c zer TO s neg
        (R32)IF kąt zer I pos zer I pr_c pos TO s neg
        
        (R33)IF kąt zer I pos pos I pr_c neg TO s zer
@@ -300,7 +302,7 @@ while not control.WantExit:
     R7 = min(ang_neg, tip_v_neg, pos_pos, cart_v_zer) #neg
     R8 = min(ang_neg, tip_v_neg, pos_pos, cart_v_pos) #neg
     
-    R9 = min(ang_neg, tip_v_zer, pos_neg, cart_v_neg) #pos
+    R9 = min(ang_neg, tip_v_zer, pos_neg, cart_v_neg) #meg
     R10 = min(ang_neg, tip_v_zer, pos_neg, cart_v_zer) #neg
     R11 = min(ang_neg, tip_v_zer, pos_neg, cart_v_pos) #neg
     
@@ -320,25 +322,27 @@ while not control.WantExit:
     R22 = min(ang_neg, tip_v_pos, pos_zer, cart_v_zer) #zer
     R23 = min(ang_neg, tip_v_pos, pos_zer, cart_v_pos) #neg
     
-    R24 = min(ang_neg, tip_v_pos, pos_pos, cart_v_neg) #zer
+    R24 = min(ang_neg, tip_v_pos, pos_pos, cart_v_neg) #neg
     R25 = min(ang_neg, tip_v_pos, pos_pos, cart_v_zer) #neg
     R26 = min(ang_neg, tip_v_pos, pos_pos, cart_v_pos) #neg
     
     R27 = min(ang_zer, pos_neg, cart_v_neg) #pos
     R28 = min(ang_zer, pos_neg, cart_v_zer) #pos
-    R29 = min(ang_zer, pos_neg, cart_v_pos) #zer
+    R29 = min(ang_zer, pos_neg, cart_v_pos) #pos
     
     R30 = min(ang_zer, pos_zer, cart_v_neg) #pos
-    R31 = min(ang_zer, pos_zer, cart_v_zer) #zer
+    R31 = min(ang_zer, tip_v_neg, pos_zer, cart_v_zer) #pos
+    R63 = min(ang_zer, tip_v_zer, pos_zer, cart_v_zer) #zer
+    R64 = min(ang_zer, tip_v_pos, pos_zer, cart_v_zer) #neg
     R32 = min(ang_zer, pos_zer, cart_v_pos) #neg
     
-    R33 = min(ang_zer, pos_pos, cart_v_neg) #zer
+    R33 = min(ang_zer, pos_pos, cart_v_neg) #neg
     R34 = min(ang_zer, pos_pos, cart_v_zer) #neg
     R35 = min(ang_zer, pos_pos, cart_v_pos) #neg
     
     R36 = min(ang_pos, tip_v_neg, pos_neg, cart_v_neg) #pos
     R37 = min(ang_pos, tip_v_neg, pos_neg, cart_v_zer) #pos
-    R38 = min(ang_pos, tip_v_neg, pos_neg, cart_v_pos) #zer
+    R38 = min(ang_pos, tip_v_neg, pos_neg, cart_v_pos) #pos
     
     R39 = min(ang_pos, tip_v_neg, pos_zer, cart_v_neg) #pos
     R40 = min(ang_pos, tip_v_neg, pos_zer, cart_v_zer) #zer
@@ -358,7 +362,7 @@ while not control.WantExit:
     
     R51 = min(ang_pos, tip_v_zer, pos_pos, cart_v_neg) #pos
     R52 = min(ang_pos, tip_v_zer, pos_pos, cart_v_zer) #pos
-    R53 = min(ang_pos, tip_v_zer, pos_pos, cart_v_pos) #neg
+    R53 = min(ang_pos, tip_v_zer, pos_pos, cart_v_pos) #pos
     
     R54 = min(ang_pos, tip_v_pos, pos_neg, cart_v_neg) #pos
     R55 = min(ang_pos, tip_v_pos, pos_neg, cart_v_zer) #pos
@@ -377,24 +381,25 @@ while not control.WantExit:
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
     """
-    unified_neg_rule = max(R0, R1, R2, R3, R4, R5,
-                           R6, R7, R8, R10,
-                           R11, R12, R13, R14,
-                           R15, R16, R17, R23, R24,
-                           R25, R26, R32, R34, R35,
-                           R43, R44)
+    unified_neg_rule = max(R1, R2,
+                           R4, R5, R6, R7,
+                           R8, R9, R10, R11, R12,
+                           R13, R14, R15, R16,
+                           R17, R23, R24, R25,
+                           R26, R29, R32, R34,
+                           R35, R43, R44, R64)
     print(f"unified_neg_rule = {unified_neg_rule}")
-    unified_zer_rule = max(R9, R20, R21,
-                           R22, R29,
-                           R31, R33,
-                           R40, R41, R42)
+    unified_zer_rule = max(R0, R3, R20, R21,
+                           R22, R40, R41, R42,
+                           R59, R63, R62)
     print(f"unified_zer_rule = {unified_zer_rule}")
-    unified_pos_rule = max(R18, R19, R27, R28, 
-                           R30, R36, R37, R38, R39,
-                           R45, R46, R47, R48,
-                           R49, R50, R51, R52, R53,
+    unified_pos_rule = max(R18, R19, R27, R28,
+                           R30, R31, R33, R36,
+                           R37, R38, R39, R45,
+                           R46, R47, R48, R49,
+                           R50, R51, R52, R53,
                            R54, R55, R56, R57,
-                           R58, R59, R60, R61, R62)
+                           R58, R60, R61)
     print(f"unified_pos_rule = {unified_pos_rule}")
     
     """
