@@ -51,19 +51,19 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 
 
 given = 0
-CART_POSITION_VALUES_RANGE = 0.2
+CART_POSITION_VALUES_RANGE = 1.0
 CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE + 2
 
 CART_VELOCITY_VALUES_RANGE = 1.0
 CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
 
-DEGREES_DIV = 12.0
+DEGREES_DIV = 36.0
 DEGREES_DISPLAY_RANGE = np.pi / 6.0
 
 TIP_VELOCITY_VALUES_RANGE = 0.2
 TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
 
-FORCE_VALUE_RANGE = 12
+FORCE_VALUE_RANGE = 10
 FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
 # cart_position
 cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE - given)
@@ -115,7 +115,7 @@ Display_membership_functions(
     force_funcs[POSITIVE],
     )
 
-#plt.show()
+plt.show()
 
 #########################################################
 # KONIEC KODU INICJUJĄCEGO
@@ -199,6 +199,8 @@ while not control.WantExit:
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
        TEORETYCZNIE POWINIENEM DODAĆ 54 REGUŁY
        (kąt, pr_t, pos, pr_c)
+       
+       
        (R0) IF kąt neg I pr_t neg I pos neg I pr_c neg TO s neg
        (R1) IF kąt neg I pr_t neg I pos neg I pr_c zer TO s neg
        (R2) IF kąt neg I pr_t neg I pos neg I pr_c pos TO s neg
@@ -290,6 +292,7 @@ while not control.WantExit:
        (R62)IF kąt pos I pr_t pos I pos pos I pr_c pos TO s pos
     """
     
+    """
     R0 = min(ang_neg, tip_v_neg, pos_neg, cart_v_neg) #zer
     R1 = min(ang_neg, tip_v_neg, pos_neg, cart_v_zer) #neg
     R2 = min(ang_neg, tip_v_neg, pos_neg, cart_v_pos) #neg
@@ -376,10 +379,25 @@ while not control.WantExit:
     R61 = min(ang_pos, tip_v_pos, pos_pos, cart_v_zer) #pos
     R62 = min(ang_pos, tip_v_pos, pos_pos, cart_v_pos) #zer
     
+           
+       (R0) IF kąt neg TO s neg
+       (R1) IF kąt pos TO s pos
+       (R2) IF kąt pos AND pos neg TO s neg
+       (R3) IF kąt neg AND pos pos TO s pos
+       (R5) IF kąt zer AND pos zer TO s zer
+
+    """
+    R0 = ang_neg
+    R1 = ang_pos
+    R2 = min(ang_pos, pos_neg)
+    R3 = min(ang_neg, pos_pos)
+    R4 = min(ang_zer, pos_zer)
+    
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
+    """
     """
     unified_neg_rule = max(R1, R2,
                            R4, R5, R6, R7,
@@ -401,7 +419,10 @@ while not control.WantExit:
                            R54, R55, R56, R57,
                            R58, R60, R61)
     print(f"unified_pos_rule = {unified_pos_rule}")
-    
+    """
+    unified_neg_rule = max(R0, R2)
+    unified_zer_rule = R4
+    unified_pos_rule = max(R1, R3)
     """
     4. Dla każdej reguły przeprowadź operację wnioskowania Mamdaniego.
        Operatorem wnioskowania jest min().
