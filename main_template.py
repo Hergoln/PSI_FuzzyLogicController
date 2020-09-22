@@ -6,6 +6,7 @@
 
 import gym # Instalacja: https://github.com/openai/gym
 import time
+import sys
 from helper import HumanControl, Keys, CartForce
 from functions import * #Display_membership_functions, Compute_weighted_integral_force, FORCE_DOMAIN
 import matplotlib.pyplot as plt
@@ -49,40 +50,24 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 3. Wyświetl je, w celach diagnostycznych.
 """
 
+given = 0 # value added to position to simulate position shift
+CART_POSITION_VALUES_RANGE = 0.1
+CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE * 3
 
-given = 0
-CART_POSITION_VALUES_RANGE = 1.0
-CART_POSITION_DISPLAY_RANGE = CART_POSITION_VALUES_RANGE + 2
-
-CART_VELOCITY_VALUES_RANGE = 1.0
-CART_VELOCITY_DISPLAY_RANGE = CART_VELOCITY_VALUES_RANGE + 1.0
-
-DEGREES_DIV = 36.0
+DEGREES_DIV = 60
 DEGREES_DISPLAY_RANGE = np.pi / 6.0
-
-TIP_VELOCITY_VALUES_RANGE = 0.2
-TIP_VELOCITY_DISPLAY_RANGE = TIP_VELOCITY_VALUES_RANGE + 2
 
 FORCE_VALUE_RANGE = 10
 FORCE_VALUE_DISPLAY_RANGE = FORCE_VALUE_RANGE + 2
+
 # cart_position
-cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE - given)
+cart_position_funcs = Generic_membership_functions(CART_POSITION_VALUES_RANGE)
 Display_membership_functions(
     'Cart position',
     CART_POSITION_DISPLAY_RANGE,
     cart_position_funcs[NEGATIVE],
     cart_position_funcs[ZERO],
     cart_position_funcs[POSITIVE],
-    )
-
-# cart_velocity
-cart_velocity_funcs = Generic_membership_functions(CART_VELOCITY_VALUES_RANGE)
-Display_membership_functions(
-    'Cart velocity',
-    CART_VELOCITY_DISPLAY_RANGE,
-    cart_velocity_funcs[NEGATIVE],
-    cart_velocity_funcs[ZERO],
-    cart_velocity_funcs[POSITIVE],
     )
 
 # pole_angle 
@@ -95,16 +80,6 @@ Display_membership_functions(
     pole_angle_funcs[POSITIVE],
     )
 
-# tip_velocity
-tip_velocities_funcs = Generic_membership_functions(TIP_VELOCITY_VALUES_RANGE)
-Display_membership_functions(
-    'Tip velocity',
-    TIP_VELOCITY_DISPLAY_RANGE,
-    tip_velocities_funcs[NEGATIVE],
-    tip_velocities_funcs[ZERO],
-    tip_velocities_funcs[POSITIVE],
-    )
-
 # force
 force_funcs = Generic_membership_functions(FORCE_VALUE_RANGE)
 Display_membership_functions(
@@ -115,7 +90,8 @@ Display_membership_functions(
     force_funcs[POSITIVE],
     )
 
-plt.show()
+if len(sys.argv) > 1 and sys.argv[1] is 's':
+    plt.show()
 
 #########################################################
 # KONIEC KODU INICJUJĄCEGO
@@ -169,7 +145,6 @@ while not control.WantExit:
 
     cart_position, cart_velocity, pole_angle, tip_velocity = env.state # Wartości zmierzone
 
-
     """
     
     1. Przeprowadź etap rozmywania, w którym dla wartości zmierzonych wyznaczone zostaną ich przynależności do poszczególnych
@@ -180,14 +155,8 @@ while not control.WantExit:
     ang_zer = pole_angle_funcs[ZERO](pole_angle)
     ang_pos = pole_angle_funcs[POSITIVE](pole_angle)
     print(f"ang neg: {ang_neg:8.4f}, ang zer: {ang_zer:8.4f}, ang pos: {ang_pos:8.4f}")
-    tip_v_neg = tip_velocities_funcs[NEGATIVE](tip_velocity)
-    tip_v_zer = tip_velocities_funcs[ZERO](tip_velocity)
-    tip_v_pos = tip_velocities_funcs[POSITIVE](tip_velocity)
-    print(f"tiv neg: {tip_v_neg:8.4f}, tiv zer: {tip_v_zer:8.4f}, tiv pos: {tip_v_pos:8.4f}")
-    cart_v_neg = cart_velocity_funcs[NEGATIVE](cart_velocity)
-    cart_v_zer = cart_velocity_funcs[ZERO](cart_velocity)
-    cart_v_pos = cart_velocity_funcs[POSITIVE](cart_velocity)
-    print(f"cav neg: {cart_v_neg:8.4f}, cav zer: {cart_v_zer:8.4f}, cav pos: {cart_v_pos:8.4f}")
+    
+    cart_position = cart_position - given
     pos_neg = cart_position_funcs[NEGATIVE](cart_position)
     pos_zer = cart_position_funcs[ZERO](cart_position)
     pos_pos = cart_position_funcs[POSITIVE](cart_position)
@@ -197,232 +166,30 @@ while not control.WantExit:
     """
     2. Wyznacza wartości aktywacji reguł rozmytych, wyznaczając stopień ich prawdziwości.       
        Przyjmując, że spójnik LUB (suma rozmyta) to max() a ORAZ/I (iloczyn rozmyty) to min() sprawdź funkcje fmax i fmin.
-       TEORETYCZNIE POWINIENEM DODAĆ 54 REGUŁY
        (kąt, pr_t, pos, pr_c)
        
-       
-       (R0) IF kąt neg I pr_t neg I pos neg I pr_c neg TO s neg
-       (R1) IF kąt neg I pr_t neg I pos neg I pr_c zer TO s neg
-       (R2) IF kąt neg I pr_t neg I pos neg I pr_c pos TO s neg
-       
-       (R3) IF kąt neg I pr_t neg I pos zer I pr_c neg TO s neg
-       (R4) IF kąt neg I pr_t neg I pos zer I pr_c zer TO s neg
-       (R5) IF kąt neg I pr_t neg I pos zer I pr_c pos TO s neg
-       
-       (R6) IF kąt neg I pr_t neg I pos pos I pr_c neg TO s neg
-       (R7) IF kąt neg I pr_t neg I pos pos I pr_c zer TO s neg
-       (R8) IF kąt neg I pr_t neg I pos pos I pr_c pos TO s neg
-       
-       #nie jestem przekonany co do pr_t = zer ====
-       (R9) IF kąt neg I pr_t zer I pos neg I pr_c neg TO s zer
-       (R10)IF kąt neg I pr_t zer I pos neg I pr_c zer TO s neg
-       (R11)IF kąt neg I pr_t zer I pos neg I pr_c pos TO s neg
-       
-       (R12)IF kąt neg I pr_t zer I pos zer I pr_c neg TO s neg
-       (R13)IF kąt neg I pr_t zer I pos zer I pr_c zer TO s neg
-       (R14)IF kąt neg I pr_t zer I pos zer I pr_c pos TO s neg
-       
-       (R15)IF kąt neg I pr_t zer I pos pos I pr_c neg TO s neg
-       (R16)IF kąt neg I pr_t zer I pos pos I pr_c zer TO s neg
-       (R17)IF kąt neg I pr_t zer I pos pos I pr_c pos TO s neg
-       #====
-       
-       (R18)IF kąt neg I pr_t pos I pos neg I pr_c neg TO s pos
-       (R19)IF kąt neg I pr_t pos I pos neg I pr_c zer TO s pos
-       (R20)IF kąt neg I pr_t pos I pos neg I pr_c pos TO s zer
-       
-       (R21)IF kąt neg I pr_t pos I pos zer I pr_c neg TO s zer
-       (R22)IF kąt neg I pr_t pos I pos zer I pr_c zer TO s zer
-       (R23)IF kąt neg I pr_t pos I pos zer I pr_c pos TO s neg
-       
-       (R24)IF kąt neg I pr_t pos I pos pos I pr_c neg TO s neg
-       (R25)IF kąt neg I pr_t pos I pos pos I pr_c zer TO s neg
-       (R26)IF kąt neg I pr_t pos I pos pos I pr_c pos TO s neg
-       
-       
-       (R27)IF kąt zer I pos neg I pr_c neg TO s pos
-       (R28)IF kąt zer I pos neg I pr_c zer TO s pos
-       (R29)IF kąt zer I pos neg I pr_c pos TO s zer
-       
-       (R30)IF kąt zer I pos zer I pr_c neg TO s pos
-       (R31)IF kąt zer I pr_t neg I pos zer I pr_c zer TO s pos
-       (R63)IF kąt zer I pr_t zer I pos zer I pr_c zer TO s zer
-       (R64)IF kąt zer I pr_t pos I pos zer I pr_c zer TO s neg
-       (R32)IF kąt zer I pos zer I pr_c pos TO s neg
-       
-       (R33)IF kąt zer I pos pos I pr_c neg TO s zer
-       (R34)IF kąt zer I pos pos I pr_c zer TO s neg
-       (R35)IF kąt zer I pos pos I pr_c pos TO s neg
-       
-       
-       (R36)IF kąt pos I pr_t neg I pos neg I pr_c neg TO s pos
-       (R37)IF kąt pos I pr_t neg I pos neg I pr_c zer TO s pos
-       (R38)IF kąt pos I pr_t neg I pos neg I pr_c pos TO s pos
-       
-       (R39)IF kąt pos I pr_t neg I pos zer I pr_c neg TO s pos
-       (R40)IF kąt pos I pr_t neg I pos zer I pr_c zer TO s zer
-       (R41)IF kąt pos I pr_t neg I pos zer I pr_c pos TO s zer
-       
-       (R42)IF kąt pos I pr_t neg I pos pos I pr_c neg TO s zer
-       (R43)IF kąt pos I pr_t neg I pos pos I pr_c zer TO s neg
-       (R44)IF kąt pos I pr_t neg I pos pos I pr_c pos TO s neg
-       
-       (R45)IF kąt pos I pr_t zer I pos neg I pr_c neg TO s pos
-       (R46)IF kąt pos I pr_t zer I pos neg I pr_c zer TO s pos
-       (R47)IF kąt pos I pr_t zer I pos neg I pr_c pos TO s pos
-       
-       (R48)IF kąt pos I pr_t zer I pos zer I pr_c neg TO s pos
-       (R49)IF kąt pos I pr_t zer I pos zer I pr_c zer TO s pos
-       (R50)IF kąt pos I pr_t zer I pos zer I pr_c pos TO s pos
-       
-       (R51)IF kąt pos I pr_t zer I pos pos I pr_c neg TO s pos
-       (R52)IF kąt pos I pr_t zer I pos pos I pr_c zer TO s pos
-       (R53)IF kąt pos I pr_t zer I pos pos I pr_c pos TO s zer
-       
-       (R54)IF kąt pos I pr_t pos I pos neg I pr_c neg TO s pos
-       (R55)IF kąt pos I pr_t pos I pos neg I pr_c zer TO s pos
-       (R56)IF kąt pos I pr_t pos I pos neg I pr_c pos TO s pos
-       
-       (R57)IF kąt pos I pr_t pos I pos zer I pr_c neg TO s pos
-       (R58)IF kąt pos I pr_t pos I pos zer I pr_c zer TO s pos
-       (R59)IF kąt pos I pr_t pos I pos zer I pr_c pos TO s pos
-       
-       (R60)IF kąt pos I pr_t pos I pos pos I pr_c neg TO s pos
-       (R61)IF kąt pos I pr_t pos I pos pos I pr_c zer TO s pos
-       (R62)IF kąt pos I pr_t pos I pos pos I pr_c pos TO s pos
-    """
-    
-    """
-    R0 = min(ang_neg, tip_v_neg, pos_neg, cart_v_neg) #zer
-    R1 = min(ang_neg, tip_v_neg, pos_neg, cart_v_zer) #neg
-    R2 = min(ang_neg, tip_v_neg, pos_neg, cart_v_pos) #neg
-    
-    R3 = min(ang_neg, tip_v_neg, pos_zer, cart_v_neg) #zer
-    R4 = min(ang_neg, tip_v_neg, pos_zer, cart_v_zer) #neg
-    R5 = min(ang_neg, tip_v_neg, pos_zer, cart_v_pos) #neg
-    
-    R6 = min(ang_neg, tip_v_neg, pos_pos, cart_v_neg) #neg
-    R7 = min(ang_neg, tip_v_neg, pos_pos, cart_v_zer) #neg
-    R8 = min(ang_neg, tip_v_neg, pos_pos, cart_v_pos) #neg
-    
-    R9 = min(ang_neg, tip_v_zer, pos_neg, cart_v_neg) #meg
-    R10 = min(ang_neg, tip_v_zer, pos_neg, cart_v_zer) #neg
-    R11 = min(ang_neg, tip_v_zer, pos_neg, cart_v_pos) #neg
-    
-    R12 = min(ang_neg, tip_v_zer, pos_zer, cart_v_neg) #neg
-    R13 = min(ang_neg, tip_v_zer, pos_zer, cart_v_zer) #neg
-    R14 = min(ang_neg, tip_v_zer, pos_zer, cart_v_pos) #neg
-    
-    R15 = min(ang_neg, tip_v_zer, pos_pos, cart_v_neg) #neg
-    R16 = min(ang_neg, tip_v_zer, pos_pos, cart_v_zer) #neg
-    R17 = min(ang_neg, tip_v_zer, pos_pos, cart_v_pos) #neg
-    
-    R18 = min(ang_neg, tip_v_pos, pos_neg, cart_v_neg) #pos
-    R19 = min(ang_neg, tip_v_pos, pos_neg, cart_v_zer) #pos
-    R20 = min(ang_neg, tip_v_pos, pos_neg, cart_v_pos) #zer
-    
-    R21 = min(ang_neg, tip_v_pos, pos_zer, cart_v_neg) #zer
-    R22 = min(ang_neg, tip_v_pos, pos_zer, cart_v_zer) #zer
-    R23 = min(ang_neg, tip_v_pos, pos_zer, cart_v_pos) #neg
-    
-    R24 = min(ang_neg, tip_v_pos, pos_pos, cart_v_neg) #neg
-    R25 = min(ang_neg, tip_v_pos, pos_pos, cart_v_zer) #neg
-    R26 = min(ang_neg, tip_v_pos, pos_pos, cart_v_pos) #neg
-    
-    R27 = min(ang_zer, pos_neg, cart_v_neg) #pos
-    R28 = min(ang_zer, pos_neg, cart_v_zer) #pos
-    R29 = min(ang_zer, pos_neg, cart_v_pos) #pos
-    
-    R30 = min(ang_zer, pos_zer, cart_v_neg) #pos
-    R31 = min(ang_zer, tip_v_neg, pos_zer, cart_v_zer) #pos
-    R63 = min(ang_zer, tip_v_zer, pos_zer, cart_v_zer) #zer
-    R64 = min(ang_zer, tip_v_pos, pos_zer, cart_v_zer) #neg
-    R32 = min(ang_zer, pos_zer, cart_v_pos) #neg
-    
-    R33 = min(ang_zer, pos_pos, cart_v_neg) #neg
-    R34 = min(ang_zer, pos_pos, cart_v_zer) #neg
-    R35 = min(ang_zer, pos_pos, cart_v_pos) #neg
-    
-    R36 = min(ang_pos, tip_v_neg, pos_neg, cart_v_neg) #pos
-    R37 = min(ang_pos, tip_v_neg, pos_neg, cart_v_zer) #pos
-    R38 = min(ang_pos, tip_v_neg, pos_neg, cart_v_pos) #pos
-    
-    R39 = min(ang_pos, tip_v_neg, pos_zer, cart_v_neg) #pos
-    R40 = min(ang_pos, tip_v_neg, pos_zer, cart_v_zer) #zer
-    R41 = min(ang_pos, tip_v_neg, pos_zer, cart_v_pos) #zer
-    
-    R42 = min(ang_pos, tip_v_neg, pos_pos, cart_v_neg) #zer
-    R43 = min(ang_pos, tip_v_neg, pos_pos, cart_v_zer) #neg
-    R44 = min(ang_pos, tip_v_neg, pos_pos, cart_v_pos) #neg
-    
-    R45 = min(ang_pos, tip_v_zer, pos_neg, cart_v_neg) #pos
-    R46 = min(ang_pos, tip_v_zer, pos_neg, cart_v_zer) #pos
-    R47 = min(ang_pos, tip_v_zer, pos_neg, cart_v_pos) #pos
-    
-    R48 = min(ang_pos, tip_v_zer, pos_zer, cart_v_neg) #pos
-    R49 = min(ang_pos, tip_v_zer, pos_zer, cart_v_zer) #pos
-    R50 = min(ang_pos, tip_v_zer, pos_zer, cart_v_pos) #pos
-    
-    R51 = min(ang_pos, tip_v_zer, pos_pos, cart_v_neg) #pos
-    R52 = min(ang_pos, tip_v_zer, pos_pos, cart_v_zer) #pos
-    R53 = min(ang_pos, tip_v_zer, pos_pos, cart_v_pos) #pos
-    
-    R54 = min(ang_pos, tip_v_pos, pos_neg, cart_v_neg) #pos
-    R55 = min(ang_pos, tip_v_pos, pos_neg, cart_v_zer) #pos
-    R56 = min(ang_pos, tip_v_pos, pos_neg, cart_v_pos) #pos
-    
-    R57 = min(ang_pos, tip_v_pos, pos_zer, cart_v_neg) #pos
-    R58 = min(ang_pos, tip_v_pos, pos_zer, cart_v_zer) #pos
-    R59 = min(ang_pos, tip_v_pos, pos_zer, cart_v_pos) #zer
-    
-    R60 = min(ang_pos, tip_v_pos, pos_pos, cart_v_neg) #pos
-    R61 = min(ang_pos, tip_v_pos, pos_pos, cart_v_zer) #pos
-    R62 = min(ang_pos, tip_v_pos, pos_pos, cart_v_pos) #zer
-    
-           
        (R0) IF kąt neg TO s neg
        (R1) IF kąt pos TO s pos
-       (R2) IF kąt pos AND pos neg TO s neg
-       (R3) IF kąt neg AND pos pos TO s pos
-       (R5) IF kąt zer AND pos zer TO s zer
+       
+       (R5) IF kąt zer AND pos neg TO s pos
+       (R6) IF kąt zer AND pos pos TO s neg
 
     """
     R0 = ang_neg
     R1 = ang_pos
-    R2 = min(ang_pos, pos_neg)
-    R3 = min(ang_neg, pos_pos)
-    R4 = min(ang_zer, pos_zer)
-    
+
+    R5 = min(ang_zer, pos_pos)
+    R6 = min(ang_zer, pos_neg)
+
     """
     3. Przeprowadź agregację reguł o tej samej konkluzji.
        Jeżeli masz kilka reguł, posiadających tę samą konkluzję (ale różne przesłanki) to poziom aktywacji tych reguł
        należy agregować tak, aby jedna konkluzja miała jeden poziom aktywacji. Skorzystaj z sumy rozmytej.
     """
-    """
-    unified_neg_rule = max(R1, R2,
-                           R4, R5, R6, R7,
-                           R8, R9, R10, R11, R12,
-                           R13, R14, R15, R16,
-                           R17, R23, R24, R25,
-                           R26, R29, R32, R34,
-                           R35, R43, R44, R64)
-    print(f"unified_neg_rule = {unified_neg_rule}")
-    unified_zer_rule = max(R0, R3, R20, R21,
-                           R22, R40, R41, R42,
-                           R59, R63, R62)
-    print(f"unified_zer_rule = {unified_zer_rule}")
-    unified_pos_rule = max(R18, R19, R27, R28,
-                           R30, R31, R33, R36,
-                           R37, R38, R39, R45,
-                           R46, R47, R48, R49,
-                           R50, R51, R52, R53,
-                           R54, R55, R56, R57,
-                           R58, R60, R61)
-    print(f"unified_pos_rule = {unified_pos_rule}")
-    """
-    unified_neg_rule = max(R0, R2)
-    unified_zer_rule = R4
-    unified_pos_rule = max(R1, R3)
+    unified_neg_rule = max(R0, R6)
+    unified_zer_rule = 0
+    unified_pos_rule = max(R1, R5)
+    
     """
     4. Dla każdej reguły przeprowadź operację wnioskowania Mamdaniego.
        Operatorem wnioskowania jest min().
@@ -437,6 +204,7 @@ while not control.WantExit:
     u_force_zer_prim = lambda y : min(unified_zer_rule, force_funcs[ZERO](y))
     u_force_pos_prim = lambda y : min(unified_pos_rule, force_funcs[POSITIVE](y))
     
+    
     """
     5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
     """
@@ -446,7 +214,7 @@ while not control.WantExit:
     6. Dokonaj defuzyfikacji (np. całkowanie ważone - centroid).
     """
     out_force_func = lambda y : max(u_force_neg_prim(y), u_force_zer_prim(y), u_force_pos_prim(y))
-    temp_fuzzy_response = Compute_weighted_integral_force(out_force_func)
+    temp_fuzzy_response = Compute_weighted_integral_force(out_force_func, FORCE_VALUE_RANGE)
     
     """
     7. Czym będzie wyjściowa wartość skalarna?
@@ -468,7 +236,7 @@ while not control.WantExit:
     #
     # Wyświetl stan środowiska oraz wartość odpowiedzi regulatora na ten stan.
     print(
-        f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={applied_force:8.4f}\n")
+        f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={fuzzy_response:8.4f}\n")
 
     #
     # Wykonaj krok symulacji

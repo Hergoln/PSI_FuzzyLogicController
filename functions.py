@@ -3,7 +3,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-FORCE_RANGE = 12
 NEGATIVE = 'Negative'
 ZERO = 'Zero'
 POSITIVE = 'Positive'
@@ -24,16 +23,16 @@ def Display_membership_functions(title, value_range, *functions):
     ax0.set_title(title)
     plt.tight_layout()
     
-def Compute_weighted_integral_force(func):
-    exs = np.linspace(-FORCE_RANGE, FORCE_RANGE, 51)
+def Compute_weighted_integral_force(func, force_range):
+    exs = np.linspace(-force_range, force_range, 501)
     weights = sum([func(x) for x in exs])
     value = sum([x * func(x) for x in exs])
     # nie wiem czy ta suma w ogóle powinna mieć kiedykolwiek zerową sumę wag :/
     if weights == 0:    
         if value > 0:
-            return FORCE_RANGE
+            return force_range
         else:
-            return -FORCE_RANGE
+            return -force_range
         
     return  value / weights
 
